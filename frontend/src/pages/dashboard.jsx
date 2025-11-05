@@ -10,16 +10,28 @@ export default function Dashboard() {
   useEffect(() => {
     async function carregar() {
       try {
-        const [evRes, stRes] = await Promise.all([
-          api.get("/api/dashboard/eventos").catch(() => ({ data: [] })),
-          api.get("/api/dashboard/estado").catch(() => ({
-            data: { estado: "Sem ligação" },
-          })),
+        // /api/eventos devolve eventos; /api/funcionarios para mapear nome
+        const [evRes, fRes] = await Promise.all([
+          api.get("/api/eventos"),
+          api.get("/api/funcionarios"),
         ]);
-        setEventos(evRes.data || []);
-        setEstadoDispositivo(stRes.data?.estado ?? "Desconhecido");
-      } catch {
-        setEstadoDispositivo("Erro ao obter estado.");
+
+        const funcionarios = fRes.data || [];
+        const mapaNome = Object.fromEntries(
+          funcionarios.map((f) => [f.id, f.nome])
+        );
+
+        const eventosComNome = (evRes.data || []).map((e) => ({
+          ...e,
+          funcionarioNome:
+            mapaNome[e.funcionario_id] || `ID ${e.funcionario_id}`,
+        }));
+
+        setEventos(eventosComNome);
+        setEstadoDispositivo("Online (API OK)");
+      } catch (e) {
+        console.error(e);
+        setEstadoDispositivo("Erro ao ligar ao backend.");
       } finally {
         setLoading(false);
       }
@@ -32,8 +44,7 @@ export default function Dashboard() {
       <header className="space-y-1">
         <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
         <p className="text-sm text-slate-300">
-          Resumo rápido do estado do dispositivo e dos últimos eventos
-          registados.
+          Resumo rápido do estado do sistema e dos últimos eventos registados.
         </p>
       </header>
 
@@ -47,8 +58,7 @@ export default function Dashboard() {
             {loading ? "A carregar..." : estadoDispositivo}
           </p>
           <p className="mt-2 text-xs text-slate-400">
-            Informação fornecida pelo módulo embebido (ESP32 / sistema de
-            reconhecimento).
+            Baseado na resposta do backend em <code>/api/eventos</code>.
           </p>
         </div>
 
@@ -64,7 +74,7 @@ export default function Dashboard() {
             </p>
           ) : (
             <ul className="space-y-2 text-sm">
-              {eventos.map((e) => (
+              {eventos.slice(0, 8).map((e) => (
                 <li
                   key={e.id}
                   className="flex items-center justify-between rounded-lg bg-slate-800/70 px-3 py-2"
@@ -72,11 +82,11 @@ export default function Dashboard() {
                   <div className="flex flex-col">
                     <span className="font-medium">{e.funcionarioNome}</span>
                     <span className="text-xs text-slate-400">
-                      {new Date(e.dataHora).toLocaleString()} • {e.tipo}
+                      {new Date(e.timestamp).toLocaleString()} • {e.tipo}
                     </span>
                   </div>
                   <div className="text-xs text-emerald-400">
-                    Confiança {e.confianca ?? "–"}%
+                    Conf. {e.conf != null ? `${e.conf}%` : "—"}
                   </div>
                 </li>
               ))}

@@ -112,18 +112,14 @@ export default function Funcionarios() {
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0, w, h);
 
-    const dataUrl = canvas.toDataURL("image/jpeg");
 
-    try {
-      await api.post(`/api/funcionarios/${idEnrolamento}/enrolamento`, {
-        fotoBase64: dataUrl,
-      });
-      alert("Foto enviada para enrolamento!");
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao enviar foto.");
-    }
+    alert(
+      "Captura de foto feita no frontend.\n" +
+        "Quando tiveres o endpoint de enrolamento (ex.: POST /api/funcionarios/:id/enrolamento), " +
+        "é só enviar o dataURL da imagem para o backend."
+    );
   }
+
 
   return (
     <div className="space-y-6">

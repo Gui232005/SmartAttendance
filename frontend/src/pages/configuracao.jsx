@@ -1,6 +1,5 @@
 // src/pages/configuracao.jsx
-import { useEffect, useState } from "react";
-import api from "../api";
+import { useState } from "react";
 
 export default function Configuracao() {
   const [config, setConfig] = useState({
@@ -10,25 +9,10 @@ export default function Configuracao() {
     mensagemDisplay: "Bem-vindo!",
   });
 
-  const [utilizadores, setUtilizadores] = useState([]);
-
-  useEffect(() => {
-    async function carregar() {
-      try {
-        const [cfgRes, usersRes] = await Promise.all([
-          api.get("/api/config").catch(() => ({ data: config })),
-          api.get("/api/utilizadores-app").catch(() => ({ data: [] })),
-        ]);
-
-        setConfig((prev) => ({ ...prev, ...(cfgRes.data || {}) }));
-        setUtilizadores(usersRes.data || []);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Exemplo de utilizadores estáticos, só para layout
+  const [utilizadores] = useState([
+    { id: 1, nome: "Admin", username: "admin", perfil: "Administrador" },
+  ]);
 
   function onChangeConfig(e) {
     const { name, value, type, checked } = e.target;
@@ -38,30 +22,32 @@ export default function Configuracao() {
     }));
   }
 
-  async function guardarConfig(e) {
+  function guardarConfig(e) {
     e.preventDefault();
-    try {
-      await api.put("/api/config", config);
-      alert("Configuração guardada.");
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao guardar configuração.");
-    }
+    alert(
+      "Configuração guardada apenas no frontend.\n" +
+        "Quando tiveres o endpoint /api/config no backend, podemos enviar estes dados para lá."
+    );
   }
 
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h2 className="text-2xl font-semibold tracking-tight">Configuração</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          Configuração
+        </h2>
         <p className="text-sm text-slate-300">
-          Ajusta os parâmetros de funcionamento do sistema e consulta os
-          utilizadores autorizados a aceder à aplicação.
+          Neste momento a configuração é apenas simulada no frontend. Quando o
+          backend tiver os endpoints, ligamos isto a /api/config.
         </p>
       </header>
 
       {/* FORM CONFIG */}
       <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={guardarConfig}>
+        <form
+          className="grid gap-4 md:grid-cols-2"
+          onSubmit={guardarConfig}
+        >
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-slate-300">
               Limiar de confiança (%)
@@ -119,7 +105,7 @@ export default function Configuracao() {
               type="submit"
               className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-emerald-400"
             >
-              Guardar configuração
+              Guardar configuração (simulação)
             </button>
           </div>
         </form>
@@ -129,7 +115,7 @@ export default function Configuracao() {
       <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-200">
-            Utilizadores da aplicação
+            Utilizadores da aplicação (exemplo)
           </h3>
           <span className="text-xs text-slate-400">
             {utilizadores.length} utilizador(es)
@@ -158,16 +144,6 @@ export default function Configuracao() {
                   <td className="px-3 py-2 text-slate-200">{u.perfil}</td>
                 </tr>
               ))}
-              {utilizadores.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-3 py-6 text-center text-sm text-slate-400"
-                  >
-                    Sem utilizadores configurados.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>

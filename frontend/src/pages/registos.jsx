@@ -1,5 +1,5 @@
 // src/pages/registos.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../api";
 
 export default function Registos() {
@@ -13,24 +13,17 @@ export default function Registos() {
   });
 
   useEffect(() => {
-    carregarFuncionarios();
-    carregarRegistos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    carregarDados();
   }, []);
 
-  async function carregarFuncionarios() {
+  async function carregarDados() {
     try {
-      const res = await api.get("/api/funcionarios");
-      setFuncionarios(res.data);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  async function carregarRegistos() {
-    try {
-      const res = await api.get("/api/registos", { params: filtros });
-      setRegistos(res.data);
+      const [evRes, fRes] = await Promise.all([
+        api.get("/api/eventos"),
+        api.get("/api/funcionarios"),
+      ]);
+      setRegistos(evRes.data || []);
+      setFuncionarios(fRes.data || []);
     } catch (e) {
       console.error(e);
     }
@@ -41,18 +34,77 @@ export default function Registos() {
     setFiltros((prev) => ({ ...prev, [name]: value }));
   }
 
+  const mapaNome = useMemo(
+    () => Object.fromEntries(funcionarios.map((f) => [f.id, f.nome])),
+    [funcionarios]
+  );
+
+  // Filtros aplicados no cliente
+  const registosFiltrados = useMemo(() => {
+    return registos.filter((r) => {
+      const data = new Date(r.timestamp);
+
+      if (filtros.dataDe) {
+        const dDe = new Date(filtros.dataDe);
+        if (data < dDe) return false;
+      }
+      if (filtros.dataAte) {
+        const dAte = new Date(filtros.dataAte);
+        dAte.setHours(23, 59, 59, 999);
+        if (data > dAte) return false;
+      }
+      if (filtros.tipo && r.tipo !== filtros.tipo) return false;
+      if (
+        filtros.funcionarioId &&
+        String(r.funcionario_id) !== String(filtros.funcionarioId)
+      )
+        return false;
+
+      return true;
+    });
+  }, [registos, filtros]);
+
+  // Exportar CSV no frontend
   function exportarCsv() {
-    const params = new URLSearchParams(filtros).toString();
-    window.open(`/api/registos/export?${params}`, "_blank");
+    const header = [
+      "id",
+      "timestamp",
+      "funcionario",
+      "tipo",
+      "conf",
+      "revisto",
+    ];
+    const linhas = registosFiltrados.map((r) => {
+      const nome = mapaNome[r.funcionario_id] || `ID ${r.funcionario_id}`;
+      return [
+        r.id,
+        new Date(r.timestamp).toISOString(),
+        nome,
+        r.tipo,
+        r.conf ?? "",
+        r.revisto ? "1" : "0",
+      ]
+        .map((campo) => `"${String(campo).replace(/"/g, '""')}"`)
+        .join(";");
+    });
+
+    const csv = header.join(";") + "\n" + linhas.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "registos.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
-  async function marcarRevisto(id) {
-    try {
-      const res = await api.put(`/api/registos/${id}`, { revisto: true });
-      setRegistos((prev) => prev.map((r) => (r.id === id ? res.data : r)));
-    } catch (e) {
-      console.error(e);
-    }
+  // Por agora, "revisto" só é marcado no frontend (backend ainda não tem PUT)
+  function marcarRevisto(id) {
+    setRegistos((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, revisto: true } : r))
+    );
   }
 
   return (
@@ -60,8 +112,8 @@ export default function Registos() {
       <header className="space-y-1">
         <h2 className="text-2xl font-semibold tracking-tight">Registos</h2>
         <p className="text-sm text-slate-300">
-          Consulta e revisão dos eventos de presença, com filtros avançados e
-          exportação para CSV.
+          Consulta dos eventos registados (tabela baseada no modelo{" "}
+          <code>Evento</code> do backend).
         </p>
       </header>
 
@@ -101,8 +153,8 @@ export default function Registos() {
               className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">Todos</option>
-              <option value="entrada">Entrada</option>
-              <option value="saida">Saída</option>
+              <option value="ENTRADA">Entrada</option>
+              <option value="SAIDA">Saída</option>
             </select>
           </div>
           <div className="flex flex-col gap-1">
@@ -126,20 +178,15 @@ export default function Registos() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-          <div className="flex gap-2">
-            <button
-              className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-emerald-400"
-              onClick={carregarRegistos}
-            >
-              Filtrar
-            </button>
-            <button
-              className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
-              onClick={exportarCsv}
-            >
-              Exportar CSV
-            </button>
-          </div>
+          <button className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-emerald-400">
+            Filtros aplicados no cliente
+          </button>
+          <button
+            className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+            onClick={exportarCsv}
+          >
+            Exportar CSV
+          </button>
         </div>
       </section>
 
@@ -150,7 +197,7 @@ export default function Registos() {
             Registos encontrados
           </h3>
           <span className="text-xs text-slate-400">
-            {registos.length} registo(s)
+            {registosFiltrados.length} registo(s)
           </span>
         </div>
 
@@ -168,19 +215,21 @@ export default function Registos() {
               </tr>
             </thead>
             <tbody>
-              {registos.map((r) => (
+              {registosFiltrados.map((r) => (
                 <tr
                   key={r.id}
                   className="border-b border-slate-800/80 last:border-0 hover:bg-slate-800/60"
                 >
                   <td className="px-3 py-2 text-xs text-slate-400">{r.id}</td>
                   <td className="px-3 py-2">
-                    {new Date(r.dataHora).toLocaleString()}
+                    {new Date(r.timestamp).toLocaleString()}
                   </td>
-                  <td className="px-3 py-2">{r.funcionarioNome}</td>
-                  <td className="px-3 py-2 capitalize">{r.tipo}</td>
                   <td className="px-3 py-2">
-                    {r.confianca != null ? `${r.confianca}%` : "—"}
+                    {mapaNome[r.funcionario_id] || `ID ${r.funcionario_id}`}
+                  </td>
+                  <td className="px-3 py-2">{r.tipo}</td>
+                  <td className="px-3 py-2">
+                    {r.conf != null ? `${r.conf}%` : "—"}
                   </td>
                   <td className="px-3 py-2">
                     {r.revisto ? (
@@ -199,13 +248,13 @@ export default function Registos() {
                         className="rounded-full border border-emerald-500/60 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/10"
                         onClick={() => marcarRevisto(r.id)}
                       >
-                        Marcar revisto
+                        Marcar revisto (frontend)
                       </button>
                     )}
                   </td>
                 </tr>
               ))}
-              {registos.length === 0 && (
+              {registosFiltrados.length === 0 && (
                 <tr>
                   <td
                     colSpan={7}
