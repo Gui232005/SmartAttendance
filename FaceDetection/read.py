@@ -23,7 +23,7 @@ while True:
     cv.imshow('Face', frame)
     if cv.waitKey(1) & 0xFF == ord('q'):
         face_img = frame[y:y + h, x:x + w].copy()  # Recorta a face detectada
-        embedding_photos() # Chama a função de embedding e vai enviar para a database
+        embedding_photos(face_img) # Chama a função de embedding e vai enviar para a database
         break
 capture.release()
 cv.destroyAllWindows()
