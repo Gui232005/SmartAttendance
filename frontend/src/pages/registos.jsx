@@ -1,6 +1,8 @@
 // src/pages/registos.jsx
 import { useEffect, useMemo, useState } from "react";
 import api from "../api";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 export default function Registos() {
   const [registos, setRegistos] = useState([]);
@@ -66,47 +68,69 @@ export default function Registos() {
     });
   }, [registos, filtros]);
 
-  // Exportar CSV no frontend
-  function exportarCsv() {
-    const header = [
-      "id",
-      "instante",
-      "funcionario",
-      "tipo",
-      "conf",
-      "revisto",
-      "origem",
-      "observacoes",
-    ];
-    const linhas = registosFiltrados.map((r) => {
-      const nome =
+  function exportarDados(formato = "csv") {
+    const dados = registosFiltrados.map((r) => ({
+      ID: r.id,
+      "Data / Hora": r.instante ? new Date(r.instante).toLocaleString() : "",
+      Funcionário:
         r.Funcionario?.nome ||
         mapaNome[r.funcionario_id] ||
-        `ID ${r.funcionario_id}`;
-      return [
-        r.id,
-        r.instante ? new Date(r.instante).toISOString() : "",
-        nome,
-        r.tipo,
-        r.conf ?? "",
-        r.revisto ? "1" : "0",
-        r.origem ?? "",
-        r.observacoes ?? "",
-      ]
-        .map((campo) => `"${String(campo).replace(/"/g, '""')}"`)
-        .join(";");
-    });
+        `ID ${r.funcionario_id}`,
+      Tipo: r.tipo,
+      Confiança: r.conf ?? "",
+      Revisto: r.revisto ? "✔" : "Pend.",
+      Origem: r.origem ?? "",
+      Observações: r.observacoes ?? "",
+    }));
 
-    const csv = header.join(";") + "\n" + linhas.join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "registos.csv";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    if (dados.length === 0) {
+      alert("Não há registos para exportar!");
+      return;
+    }
+
+    if (formato === "csv") {
+      // === CSV (com BOM UTF-8 para suportar acentuação no Excel) ===
+      const header = Object.keys(dados[0]).join(";");
+      const linhas = dados.map((obj) =>
+        Object.values(obj)
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+          .join(";")
+      );
+      const csv = "\uFEFF" + header + "\n" + linhas.join("\n"); // BOM UTF-8
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      saveAs(blob, "registos.csv");
+    } else if (formato === "xlsx") {
+      // === XLSX ===
+      const ws = XLSX.utils.json_to_sheet(dados);
+
+      // Define largura das colunas (ajuste automático)
+      const colWidths = Object.keys(dados[0]).map(() => ({ wch: 20 }));
+      ws["!cols"] = colWidths;
+
+      // Centrar texto (horizontal + vertical)
+      const range = XLSX.utils.decode_range(ws["!ref"]);
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!ws[cellRef]) continue;
+          if (!ws[cellRef].s) ws[cellRef].s = {};
+          ws[cellRef].s.alignment = {
+            horizontal: "center",
+            vertical: "center",
+            wrapText: true,
+          };
+        }
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Registos");
+
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([wbout], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      saveAs(blob, "registos.xlsx");
+    }
   }
 
   // agora atualiza mesmo no backend
@@ -196,16 +220,24 @@ export default function Registos() {
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
           <span className="text-xs text-slate-400">
-            Filtros são aplicados no frontend; o backend devolve a lista
-            completa de eventos.
           </span>
-          <button
-            className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
-            onClick={exportarCsv}
-          >
-            Exportar CSV
-          </button>
+
+          <div className="flex gap-2 ml-auto">
+            <button
+              className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+              onClick={() => exportarDados("csv")}
+            >
+              Exportar CSV
+            </button>
+            <button
+              className="rounded-lg border border-emerald-600 px-4 py-2 text-sm font-medium text-emerald-300 hover:bg-emerald-600/20"
+              onClick={() => exportarDados("xlsx")}
+            >
+              Exportar Excel <span className="text-xs text-emerald-400"></span>
+            </button>
+          </div>
         </div>
+
       </section>
 
       {/* TABELA */}
@@ -288,4 +320,3 @@ export default function Registos() {
     </div>
   );
 }
-  

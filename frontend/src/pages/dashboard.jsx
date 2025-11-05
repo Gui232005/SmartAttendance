@@ -13,7 +13,7 @@ export default function Dashboard() {
         // /api/eventos já traz o Funcionario incluído (pelo controller)
         const res = await api.get("/api/eventos");
         setEventos(res.data || []);
-        setEstadoDispositivo("Online (API OK)");
+        setEstadoDispositivo("Online");
       } catch (e) {
         console.error("Erro ao carregar eventos:", e);
         setEstadoDispositivo("Erro ao ligar ao backend.");
