@@ -1,13 +1,44 @@
-const { DataTypes } = require("sequelize");
-const { sequelize } = require("../db");
-const Evento = sequelize.define("Evento", {
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-  funcionario_id: { type: DataTypes.INTEGER, allowNull: false },
-  tipo: { type: DataTypes.STRING, allowNull: false }, // ENTRADA/SAIDA/...
-  timestamp: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
-  conf: { type: DataTypes.FLOAT },
-  origem: { type: DataTypes.STRING },
-  revisto: { type: DataTypes.BOOLEAN, defaultValue: false },
-  observacoes: { type: DataTypes.STRING },
-});
-module.exports = Evento;
+// models/evento.js
+module.exports = (sequelize, DataTypes) => {
+  const Evento = sequelize.define('Evento', {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true
+    },
+    funcionario_id: {
+      type: DataTypes.INTEGER
+    },
+    tipo: {
+      type: DataTypes.ENUM('ENTRADA', 'SAIDA', 'ALMOCO_IN', 'ALMOCO_OUT', 'CORRECAO'),
+      allowNull: false
+    },
+    instante: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
+    },
+    origem: {
+      type: DataTypes.STRING(30),
+      defaultValue: 'EDGE'
+    },
+    conf: {
+      type: DataTypes.FLOAT
+    },
+    revisto: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    observacoes: {
+      type: DataTypes.TEXT
+    }
+  }, {
+    tableName: 'evento',
+    timestamps: false
+  });
+
+  Evento.associate = models => {
+    Evento.belongsTo(models.Funcionario, { foreignKey: 'funcionario_id' });
+  };
+
+  return Evento;
+};
