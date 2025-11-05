@@ -1,7 +1,8 @@
-// models/index.js
+// src/models/index.js
 const { Sequelize, DataTypes } = require('sequelize');
-const path = require('path');
 require('dotenv').config();
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -10,8 +11,16 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 5432,
-    dialect: 'postgres',
-    logging: false
+    dialect: process.env.DB_DIALECT || 'postgres',
+    logging: false,
+    dialectOptions: isProduction
+      ? {
+          ssl: {
+            require: true,
+            rejectUnauthorized: false,
+          },
+        }
+      : {},
   }
 );
 
@@ -20,12 +29,12 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-db.Funcionario = require('./funcionario')(sequelize, DataTypes);
-db.FaceTemplate = require('./facetemplate')(sequelize, DataTypes);
-db.Evento = require('./evento')(sequelize, DataTypes);
+db.Funcionario   = require('./funcionario')(sequelize, DataTypes);
+db.FaceTemplate  = require('./facetemplate')(sequelize, DataTypes);
+db.Evento        = require('./evento')(sequelize, DataTypes);
 db.UtilizadorApp = require('./utilizadorapp')(sequelize, DataTypes);
 
-// Criar associações
+// Associações
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {
     db[modelName].associate(db);
