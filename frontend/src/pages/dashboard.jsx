@@ -10,27 +10,12 @@ export default function Dashboard() {
   useEffect(() => {
     async function carregar() {
       try {
-        // /api/eventos devolve eventos; /api/funcionarios para mapear nome
-        const [evRes, fRes] = await Promise.all([
-          api.get("/api/eventos"),
-          api.get("/api/funcionarios"),
-        ]);
-
-        const funcionarios = fRes.data || [];
-        const mapaNome = Object.fromEntries(
-          funcionarios.map((f) => [f.id, f.nome])
-        );
-
-        const eventosComNome = (evRes.data || []).map((e) => ({
-          ...e,
-          funcionarioNome:
-            mapaNome[e.funcionario_id] || `ID ${e.funcionario_id}`,
-        }));
-
-        setEventos(eventosComNome);
+        // /api/eventos já traz o Funcionario incluído (pelo controller)
+        const res = await api.get("/api/eventos");
+        setEventos(res.data || []);
         setEstadoDispositivo("Online (API OK)");
       } catch (e) {
-        console.error(e);
+        console.error("Erro ao carregar eventos:", e);
         setEstadoDispositivo("Erro ao ligar ao backend.");
       } finally {
         setLoading(false);
@@ -58,7 +43,8 @@ export default function Dashboard() {
             {loading ? "A carregar..." : estadoDispositivo}
           </p>
           <p className="mt-2 text-xs text-slate-400">
-            Baseado na resposta do backend em <code>/api/eventos</code>.
+            Informação com base na resposta do endpoint{" "}
+            <code>/api/eventos</code>.
           </p>
         </div>
 
@@ -80,13 +66,21 @@ export default function Dashboard() {
                   className="flex items-center justify-between rounded-lg bg-slate-800/70 px-3 py-2"
                 >
                   <div className="flex flex-col">
-                    <span className="font-medium">{e.funcionarioNome}</span>
+                    <span className="font-medium">
+                      {e.Funcionario?.nome ||
+                        `Funcionario ID ${e.funcionario_id || "—"}`}
+                    </span>
                     <span className="text-xs text-slate-400">
-                      {new Date(e.timestamp).toLocaleString()} • {e.tipo}
+                      {e.instante
+                        ? new Date(e.instante).toLocaleString()
+                        : "sem data"}{" "}
+                      • {e.tipo}
                     </span>
                   </div>
-                  <div className="text-xs text-emerald-400">
-                    Conf. {e.conf != null ? `${e.conf}%` : "—"}
+                  <div className="text-xs text-emerald-400 text-right">
+                    {e.conf != null ? `Conf. ${e.conf}%` : "Conf. N/A"}
+                    <br />
+                    {e.revisto ? "✔ Revisto" : "❌ Por rever"}
                   </div>
                 </li>
               ))}

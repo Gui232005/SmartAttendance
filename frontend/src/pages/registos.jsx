@@ -25,7 +25,7 @@ export default function Registos() {
       setRegistos(evRes.data || []);
       setFuncionarios(fRes.data || []);
     } catch (e) {
-      console.error(e);
+      console.error("Erro ao carregar registos:", e);
     }
   }
 
@@ -42,18 +42,20 @@ export default function Registos() {
   // Filtros aplicados no cliente
   const registosFiltrados = useMemo(() => {
     return registos.filter((r) => {
-      const data = new Date(r.timestamp);
+      const data = r.instante ? new Date(r.instante) : null;
 
-      if (filtros.dataDe) {
+      if (data && filtros.dataDe) {
         const dDe = new Date(filtros.dataDe);
         if (data < dDe) return false;
       }
-      if (filtros.dataAte) {
+      if (data && filtros.dataAte) {
         const dAte = new Date(filtros.dataAte);
         dAte.setHours(23, 59, 59, 999);
         if (data > dAte) return false;
       }
+
       if (filtros.tipo && r.tipo !== filtros.tipo) return false;
+
       if (
         filtros.funcionarioId &&
         String(r.funcionario_id) !== String(filtros.funcionarioId)
@@ -68,21 +70,28 @@ export default function Registos() {
   function exportarCsv() {
     const header = [
       "id",
-      "timestamp",
+      "instante",
       "funcionario",
       "tipo",
       "conf",
       "revisto",
+      "origem",
+      "observacoes",
     ];
     const linhas = registosFiltrados.map((r) => {
-      const nome = mapaNome[r.funcionario_id] || `ID ${r.funcionario_id}`;
+      const nome =
+        r.Funcionario?.nome ||
+        mapaNome[r.funcionario_id] ||
+        `ID ${r.funcionario_id}`;
       return [
         r.id,
-        new Date(r.timestamp).toISOString(),
+        r.instante ? new Date(r.instante).toISOString() : "",
         nome,
         r.tipo,
         r.conf ?? "",
         r.revisto ? "1" : "0",
+        r.origem ?? "",
+        r.observacoes ?? "",
       ]
         .map((campo) => `"${String(campo).replace(/"/g, '""')}"`)
         .join(";");
@@ -100,11 +109,16 @@ export default function Registos() {
     URL.revokeObjectURL(url);
   }
 
-  // Por agora, "revisto" só é marcado no frontend (backend ainda não tem PUT)
-  function marcarRevisto(id) {
-    setRegistos((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, revisto: true } : r))
-    );
+  // agora atualiza mesmo no backend
+  async function marcarRevisto(id) {
+    try {
+      const res = await api.put(`/api/eventos/${id}`, { revisto: true });
+      const atualizado = res.data;
+      setRegistos((prev) => prev.map((r) => (r.id === id ? atualizado : r)));
+    } catch (e) {
+      console.error("Erro ao marcar revisto:", e);
+      alert("Erro ao marcar registo como revisto.");
+    }
   }
 
   return (
@@ -112,8 +126,8 @@ export default function Registos() {
       <header className="space-y-1">
         <h2 className="text-2xl font-semibold tracking-tight">Registos</h2>
         <p className="text-sm text-slate-300">
-          Consulta dos eventos registados (tabela baseada no modelo{" "}
-          <code>Evento</code> do backend).
+          Tabela baseada no modelo <code>Evento</code> do backend, com filtros e
+          exportação para CSV.
         </p>
       </header>
 
@@ -153,8 +167,11 @@ export default function Registos() {
               className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">Todos</option>
-              <option value="ENTRADA">Entrada</option>
-              <option value="SAIDA">Saída</option>
+              <option value="ENTRADA">ENTRADA</option>
+              <option value="SAIDA">SAÍDA</option>
+              <option value="ALMOCO_IN">ALMOCO_IN</option>
+              <option value="ALMOCO_OUT">ALMOCO_OUT</option>
+              <option value="CORRECAO">CORREÇÃO</option>
             </select>
           </div>
           <div className="flex flex-col gap-1">
@@ -178,9 +195,10 @@ export default function Registos() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-          <button className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-emerald-400">
-            Filtros aplicados no cliente
-          </button>
+          <span className="text-xs text-slate-400">
+            Filtros são aplicados no frontend; o backend devolve a lista
+            completa de eventos.
+          </span>
           <button
             className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
             onClick={exportarCsv}
@@ -196,9 +214,6 @@ export default function Registos() {
           <h3 className="text-sm font-semibold text-slate-200">
             Registos encontrados
           </h3>
-          <span className="text-xs text-slate-400">
-            {registosFiltrados.length} registo(s)
-          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -222,10 +237,12 @@ export default function Registos() {
                 >
                   <td className="px-3 py-2 text-xs text-slate-400">{r.id}</td>
                   <td className="px-3 py-2">
-                    {new Date(r.timestamp).toLocaleString()}
+                    {r.instante ? new Date(r.instante).toLocaleString() : "—"}
                   </td>
                   <td className="px-3 py-2">
-                    {mapaNome[r.funcionario_id] || `ID ${r.funcionario_id}`}
+                    {r.Funcionario?.nome ||
+                      mapaNome[r.funcionario_id] ||
+                      `ID ${r.funcionario_id}`}
                   </td>
                   <td className="px-3 py-2">{r.tipo}</td>
                   <td className="px-3 py-2">
@@ -248,7 +265,7 @@ export default function Registos() {
                         className="rounded-full border border-emerald-500/60 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/10"
                         onClick={() => marcarRevisto(r.id)}
                       >
-                        Marcar revisto (frontend)
+                        Marcar revisto
                       </button>
                     )}
                   </td>
@@ -271,3 +288,4 @@ export default function Registos() {
     </div>
   );
 }
+  

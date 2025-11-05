@@ -8,8 +8,10 @@ export default function Funcionarios() {
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
+  const [ativo, setAtivo] = useState(true);
   const [idEdicao, setIdEdicao] = useState(null);
 
+  // câmera (ainda sem envio para backend)
   const [idEnrolamento, setIdEnrolamento] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -32,27 +34,36 @@ export default function Funcionarios() {
 
   async function guardarFuncionario(e) {
     e.preventDefault();
-    if (!nome || !email) return;
+    if (!nome || !email) {
+      alert("Preenche nome e email.");
+      return;
+    }
 
     try {
       if (idEdicao) {
         const res = await api.put(`/api/funcionarios/${idEdicao}`, {
           nome,
           email,
+          ativo,
         });
         setFuncs((prev) => prev.map((f) => (f.id === idEdicao ? res.data : f)));
         setStatus("Funcionário atualizado.");
       } else {
-        const res = await api.post("/api/funcionarios", { nome, email });
+        const res = await api.post("/api/funcionarios", {
+          nome,
+          email,
+          ativo,
+        });
         setFuncs((prev) => [...prev, res.data]);
         setStatus("Funcionário criado.");
       }
       setNome("");
       setEmail("");
+      setAtivo(true);
       setIdEdicao(null);
     } catch (e) {
       console.error(e);
-      alert("Erro ao guardar funcionário");
+      alert(e.response?.data?.error || "Erro ao guardar funcionário");
     }
   }
 
@@ -60,6 +71,7 @@ export default function Funcionarios() {
     setIdEdicao(f.id);
     setNome(f.nome);
     setEmail(f.email);
+    setAtivo(f.ativo);
   }
 
   async function eliminar(id) {
@@ -67,13 +79,14 @@ export default function Funcionarios() {
     try {
       await api.delete(`/api/funcionarios/${id}`);
       setFuncs((prev) => prev.filter((f) => f.id !== id));
+      setStatus("Funcionário eliminado.");
     } catch (e) {
       console.error(e);
       alert("Erro ao eliminar");
     }
   }
 
-  // --- CÂMARA / ENROLAMENTO ---
+  // --- CÂMARA / ENROLAMENTO (ainda só frontend) ---
 
   async function iniciarCamera(funcId) {
     setIdEnrolamento(funcId);
@@ -100,7 +113,7 @@ export default function Funcionarios() {
     setIdEnrolamento(null);
   }
 
-  async function capturarFoto() {
+  function capturarFoto() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
@@ -112,22 +125,19 @@ export default function Funcionarios() {
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0, w, h);
 
-
     alert(
-      "Captura de foto feita no frontend.\n" +
-        "Quando tiveres o endpoint de enrolamento (ex.: POST /api/funcionarios/:id/enrolamento), " +
-        "é só enviar o dataURL da imagem para o backend."
+      "Foto capturada no frontend.\n" +
+        "Quando tiveres endpoints para FaceTemplate (por ex. /api/facetemplates)," +
+        " podemos enviar a imagem/embedding para o backend."
     );
   }
-
 
   return (
     <div className="space-y-6">
       <header className="space-y-1">
         <h2 className="text-2xl font-semibold tracking-tight">Funcionários</h2>
         <p className="text-sm text-slate-300">
-          Gerir a lista de funcionários, editar dados e fazer o enrolamento
-          facial através da câmara do sistema.
+          CRUD completo em cima de <code>/api/funcionarios</code>.
         </p>
         <p className="text-xs text-slate-400">
           <b>Estado:</b> {status}
@@ -162,6 +172,21 @@ export default function Funcionarios() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="ativo"
+              type="checkbox"
+              checked={ativo}
+              onChange={(e) => setAtivo(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
+            />
+            <label
+              htmlFor="ativo"
+              className="text-xs font-medium text-slate-300"
+            >
+              Ativo
+            </label>
+          </div>
           <div className="flex gap-2">
             <button
               type="submit"
@@ -177,6 +202,7 @@ export default function Funcionarios() {
                   setIdEdicao(null);
                   setNome("");
                   setEmail("");
+                  setAtivo(true);
                 }}
               >
                 Cancelar
@@ -204,7 +230,7 @@ export default function Funcionarios() {
                 <th className="px-3 py-2">#</th>
                 <th className="px-3 py-2">Nome</th>
                 <th className="px-3 py-2">Email</th>
-                <th className="px-3 py-2">Enrolamento</th>
+                <th className="px-3 py-2">Ativo</th>
                 <th className="px-3 py-2 text-right">Ações</th>
               </tr>
             </thead>
@@ -218,12 +244,15 @@ export default function Funcionarios() {
                   <td className="px-3 py-2">{f.nome}</td>
                   <td className="px-3 py-2 text-slate-300">{f.email}</td>
                   <td className="px-3 py-2">
-                    <button
-                      className="rounded-full border border-sky-500/60 bg-slate-900 px-3 py-1 text-xs font-medium text-sky-300 hover:bg-sky-500/10"
-                      onClick={() => iniciarCamera(f.id)}
-                    >
-                      Tirar foto
-                    </button>
+                    {f.ativo ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                        Ativo
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-slate-700/60 px-2 py-0.5 text-xs font-medium text-slate-200">
+                        Inativo
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right space-x-2">
                     <button
@@ -237,6 +266,12 @@ export default function Funcionarios() {
                       onClick={() => eliminar(f.id)}
                     >
                       Eliminar
+                    </button>
+                    <button
+                      className="rounded-full border border-sky-500/60 px-3 py-1 text-xs font-medium text-sky-300 hover:bg-sky-500/10"
+                      onClick={() => iniciarCamera(f.id)}
+                    >
+                      Enrolamento
                     </button>
                   </td>
                 </tr>
@@ -288,7 +323,7 @@ export default function Funcionarios() {
               className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-emerald-400"
               onClick={capturarFoto}
             >
-              Capturar / Enviar
+              Capturar (simulação)
             </button>
             <button
               className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
