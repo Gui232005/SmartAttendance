@@ -5,15 +5,20 @@ const db = require('./models');
 
 const app = express();
 
-// Middleware base
 app.use(express.json());
 
-// Rota de teste
+// Rotas
+const funcionarioRoutes = require('./routes/funcionario');
+const eventoRoutes = require('./routes/evento');
+
+app.use('/api/funcionarios', funcionarioRoutes);
+app.use('/api/eventos', eventoRoutes);
+
+// Rota simples de teste
 app.get('/', (req, res) => {
   res.send('API Sistemas-Embebidos online 🚀');
 });
 
-// Porta: Render dá sempre process.env.PORT
 const PORT = process.env.PORT || 3001;
 
 async function start() {
@@ -21,9 +26,6 @@ async function start() {
     console.log('🔌 A ligar à base de dados...');
     await db.sequelize.authenticate();
     console.log('✅ Ligado à base de dados!');
-
-    // Se quiseres, podes remover o sync em produção
-    // await db.sequelize.sync();
 
     app.listen(PORT, () => {
       console.log(`🚀 Servidor a ouvir na porta ${PORT}`);
