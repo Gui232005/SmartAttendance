@@ -2,24 +2,28 @@ import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
 
-face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml') # Carrega o modelo para deteção de faces
+from embedding import embedding_photos
 
-#Read Videos
-capture = cv.VideoCapture(0)
+face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
+capture = cv.VideoCapture(0) # Abre a câmara padrão
+
+if not capture.isOpened():
+    print('Erro ao abrir a câmera')
+    exit()
 
 while True:
-    ret, frame = capture.read()
-    if not ret:
-        print("Error: Could not read frame.")
+    isTrue, frame = capture.read()
+    if not isTrue:
+        print('Erro ao capturar o vídeo')
         break
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    isTrue, frame = capture.read()
-    for(x, y, w, h) in faces:
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+    for (x, y, w, h) in faces:
         cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    cv.imshow('Video', frame)
-    if cv.waitKey(20) & 0xFF == ord('q'):
+    cv.imshow('Face', frame)
+    if cv.waitKey(1) & 0xFF == ord('q'):
+        face_img = frame[y:y + h, x:x + w].copy()  # Recorta a face detectada
+        embedding_photos() # Chama a função de embedding e vai enviar para a database
         break
-    capture.release()
-    cv.destroyAllWindows()
-    cv.waitKey(0)
+capture.release()
+cv.destroyAllWindows()
