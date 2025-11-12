@@ -1,8 +1,10 @@
+import datetime
+
 import numpy as np
 from deepface import DeepFace
 import cv2 as cv
 import psycopg2 # Para a database
-from tensorflow.python.eager.context import async_wait
+from sympy import true
 
 
 def connect_database():
@@ -58,8 +60,17 @@ def resgiste_presence(embedding1):
     else:
         print("Pessoas não está na base de dados")
 
-def register_person_database():
+def register_person_database(embedding): #Preciso de ver a parte do procedure
     '''Aqui vai ser registado os users para ter na database'''
+    #Fazer uma verificação do embedding e nao deixa passar se nao for em condicoes
     conn = connect_database()
-    cursor = conn.cursor()
-    cursor.execute('') # Aqui vamos chamar o procedure para inserir os dados
+    cursor = conn.cursor(),                                                                                                                     '''Não sei o que querem guardar aqui - Vou meter NULL'''
+    #Criar uma forma de dar add sempre no id seguinte em tudo o que for ids                                                                                                 |
+    cursor.execute(f"CALL funcionario_inserido (funcionario_id, nome, email, {true}, {datetime.datetime.now()}, {datetime.datetime.now()}, face_id, {embedding}, qualidade, thumbnail_path, {true}, {datetime.datetime.now()})")
+    conn.commit()
+    if cursor.rowcount > 0:
+        print("Funcionário registado com sucesso na base de dados.")
+    else:
+        print("Falha ao registar o funcionário na base de dados.")
+    cursor.close()
+    conn.close()
