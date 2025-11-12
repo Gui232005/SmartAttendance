@@ -1,7 +1,7 @@
 // src/server.js
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
+const cors = require("cors"); // 👈 ADICIONAR
 const db = require("./models");
 
 const app = express();

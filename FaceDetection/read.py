@@ -6,6 +6,7 @@ from embedding import embedding_photos
 
 face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
 capture = cv.VideoCapture(0) # Abre a câmara padrão
+#capture = cv.VideoCapture('Videos/Caminha.mp4') # Abre um vídeo
 
 if not capture.isOpened():
     print('Erro ao abrir a câmera')
@@ -23,7 +24,7 @@ while True:
     cv.imshow('Face', frame)
     if cv.waitKey(1) & 0xFF == ord('q'):
         face_img = frame[y:y + h, x:x + w].copy()  # Recorta a face detectada
-        embedding_photos() # Chama a função de embedding e vai enviar para a database
+        embedding_photos(face_img) # Chama a função de embedding e vai enviar para a database
         break
 capture.release()
 cv.destroyAllWindows()
