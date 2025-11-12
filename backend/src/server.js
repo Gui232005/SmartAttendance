@@ -1,7 +1,7 @@
 // src/server.js
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors"); // 👈 ADICIONAR
+const cors = require("cors");
 const db = require("./models");
 
 const app = express();
@@ -10,8 +10,8 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173", // frontend em dev
-      // 'https://o-teu-front-end-em-produção.com'  <- quando tiveres
+      "http://localhost:5173",
+      "https://sistemas-embebidos-zpfi.vercel.app/",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
