@@ -5,7 +5,7 @@ const db = require('./models');
   try {
     await db.sequelize.authenticate();
     console.log('✅ Ligação à base de dados com sucesso.');
-    await db.sequelize.sync({ alter: true }); // cria as tabelas se não existirem
+    await db.sequelize.sync({ alter: true });
     console.log('📦 Sincronização completa.');
   } catch (error) {
     console.error('❌ Erro na ligação:', error);

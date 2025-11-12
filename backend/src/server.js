@@ -1,17 +1,16 @@
 // src/server.js
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors"); // 👈 ADICIONAR
+const cors = require("cors"); 
 const db = require("./models");
 
 const app = express();
 
-// CORS – permite pedidos do teu frontend (localhost e, no futuro, produção)
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://sistemas-embebidos-zpfi.vercel.app/",
+      "https://sistemas-embebidos-zpfi.vercel.app",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
@@ -19,14 +18,12 @@ app.use(
 
 app.use(express.json());
 
-// Rotas
 const funcionarioRoutes = require("./routes/funcionario");
 const eventoRoutes = require("./routes/evento");
 
 app.use("/api/funcionarios", funcionarioRoutes);
 app.use("/api/eventos", eventoRoutes);
 
-// Rota simples de teste
 app.get("/", (req, res) => {
   res.send("API Sistemas-Embebidos online 🚀");
 });
