@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://sistemas-embebidos-baackend.onrender.com",
+  baseURL: import.meta.env.VITE_API_URL
 });
 
 export default api;
