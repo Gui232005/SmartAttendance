@@ -1,5 +1,4 @@
 import numpy as np
-import faiss
 from deepface import DeepFace
 import cv2 as cv
 
@@ -11,9 +10,4 @@ def embedding_photos(photo: np.ndarray):
 
     embedding = np.array(result[0]["embedding"], dtype=np.float32)
 
-    dimension = embedding.shape[0]
-    index = faiss.IndexFlatL2(dimension)
-    index.add(np.array([embedding]))
-
     print(f"Photo em embedding: {embedding}")
-    print("Embedding adicionado ao índice FAISS.")

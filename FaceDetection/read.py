@@ -6,6 +6,7 @@ from embedding import embedding_photos
 
 face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
 capture = cv.VideoCapture(0) # Abre a câmara padrão
+#capture = cv.VideoCapture('Videos/Caminha.mp4') # Abre um vídeo
 
 if not capture.isOpened():
     print('Erro ao abrir a câmera')
