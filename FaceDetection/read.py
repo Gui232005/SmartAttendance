@@ -1,8 +1,6 @@
 import cv2 as cv
-import numpy as np
-import matplotlib.pyplot as plt
 
-from embedding import embedding_photos
+from embedding import embedding_photos, connect_database, register_person_database
 
 face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
 capture = cv.VideoCapture(0) # Abre a câmara padrão
@@ -24,6 +22,10 @@ while True:
     cv.imshow('Face', frame)
     if cv.waitKey(1) & 0xFF == ord('q'):
         face_img = frame[y:y + h, x:x + w].copy()  # Recorta a face detectada
+
+        register_person_database() # Quando quiser registar pessoas
+        embedding_photos(face_img) # Quando quiser marcar a presença
+
         embedding_photos(face_img) # Chama a função de embedding e vai enviar para a database
         break
 capture.release()
