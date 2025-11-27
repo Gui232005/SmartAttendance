@@ -256,6 +256,7 @@ export default function Registos() {
                 <th className="px-3 py-2">Data / Hora</th>
                 <th className="px-3 py-2">Funcionário</th>
                 <th className="px-3 py-2">Tipo</th>
+                <th className="px-3 py-2">Observações</th>
                 <th className="px-3 py-2">Revisto</th>
                 <th className="px-3 py-2 text-right">Ações</th>
               </tr>
@@ -277,7 +278,7 @@ export default function Registos() {
                   </td>
                   <td className="px-3 py-2">{r.tipo}</td>
                   <td className="px-3 py-2">
-                    {r.observacoes != null ? `${r.observacoes}%` : "—"}
+                    {r.conf != null ? `${r.conf}%` : "—"}
                   </td>
                   <td className="px-3 py-2">
                     {r.revisto ? (
