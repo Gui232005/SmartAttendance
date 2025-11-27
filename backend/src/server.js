@@ -6,32 +6,41 @@ const db = require("./models");
 
 const app = express();
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://sistemas-embebidos-borrachoes.vercel.app",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+// ==========================================================
+//  FIX ABSOLUTO DE CORS PARA RENDER (necessário!)
+// ==========================================================
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
 
-app.options("*", cors());
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
 
+  next();
+});
+
+// Middleware CORS
+app.use(cors());
 app.use(express.json());
 
+// Rotas
 const funcionarioRoutes = require("./routes/funcionario");
 const eventoRoutes = require("./routes/evento");
 
 app.use("/api/funcionarios", funcionarioRoutes);
 app.use("/api/eventos", eventoRoutes);
 
+// Rota base
 app.get("/", (req, res) => {
   res.send("API Sistemas-Embebidos online 🚀");
 });
 
-
+// Início do servidor
 const PORT = process.env.PORT || 3001;
 
 async function start() {
