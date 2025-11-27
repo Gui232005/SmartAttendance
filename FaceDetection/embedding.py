@@ -28,7 +28,7 @@ def embedding_photos(photo: np.ndarray):
 
     embedding = np.array(result[0]["embedding"], dtype=np.float32)
 
-    #resgiste_presence(embedding)
+    resgiste_presence(embedding)
 
     #No caso de termos que registar uma nova pessoa na database, arranjar uma maneira de ir buscar o nome e email
 
@@ -36,7 +36,7 @@ def embedding_photos(photo: np.ndarray):
     #email = "guilherme@gmail.com"
     #register_person_database(name, email, embedding)
 
-    return embedding
+    #return embedding
 
 def resgiste_presence(embedding1):
     while True:
