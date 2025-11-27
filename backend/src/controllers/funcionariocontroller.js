@@ -1,5 +1,6 @@
 // src/controllers/funcionariocontroller.js
 const { Funcionario } = require('../models');
+const spawn = require('child_process');
 
 // GET /api/funcionarios
 async function listarFuncionarios(req, res) {
@@ -35,6 +36,7 @@ async function obterFuncionario(req, res) {
 async function criarFuncionario(req, res) {
   try {
     const { nome, email, ativo } = req.body;
+
 
     if (!nome || !email) {
       return res.status(400).json({ error: 'Nome e email são obrigatórios' });
