@@ -10,7 +10,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://sistemas-embebidos-zpfi.vercel.app",
+      "https://sistemas-embebidos-borrachoes.vercel.app",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
