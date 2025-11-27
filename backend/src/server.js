@@ -7,7 +7,7 @@ const db = require("./models");
 const app = express();
 
 // ==========================================================
-//  FIX ABSOLUTO DE CORS PARA RENDER (necessário!)
+//  FIX ABSOLUTO DE CORS PARA RENDER
 // ==========================================================
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -24,7 +24,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware CORS
 app.use(cors());
 app.use(express.json());
 
@@ -35,7 +34,6 @@ const eventoRoutes = require("./routes/evento");
 app.use("/api/funcionarios", funcionarioRoutes);
 app.use("/api/eventos", eventoRoutes);
 
-// Rota base
 app.get("/", (req, res) => {
   res.send("API Sistemas-Embebidos online 🚀");
 });
@@ -48,6 +46,8 @@ async function start() {
     console.log("🔌 A ligar à base de dados...");
     await db.sequelize.authenticate();
     console.log("✅ Ligado à base de dados!");
+
+    await db.sequelize.sync(); // garantir que tudo está sincronizado
 
     app.listen(PORT, () => {
       console.log(`🚀 Servidor a ouvir na porta ${PORT}`);
