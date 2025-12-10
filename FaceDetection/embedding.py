@@ -1,18 +1,18 @@
-import cv2 as cv, numpy as np, datetime, psycopg2
+import cv2 as cv
+import numpy as np
+import datetime
+import psycopg2
 from deepface import DeepFace
-from joblib import delayed
-from psycopg import cursor
-from tensorflow.python.eager.context import async_wait
-
 
 def connect_database():
     try:
         conn = psycopg2.connect(
-            database="sistemas_embebidos_db",
+            dbname="sistemas_embebidos_db_mqgl",
             user="sistemas_embebidos_db_user",
-            password="pAw5zk32wojrN3bqaJRRTZ9fMor53B6p",
-            host="dpg-d45lskhr0fns73f7slvg-a.frankfurt-postgres.render.com",
-            port="5432"
+            password="Bg3340Y1rT6gZ4JYMw5tKiDEZzgCiISB",
+            host="dpg-d4s7rhh5pdvs73c1evg0-a.frankfurt-postgres.render.com",
+            port=5432,
+            sslmode="require"
         )
         return conn
     except psycopg2.OperationalError as e:
@@ -33,12 +33,16 @@ def embedding_photos(photo: np.ndarray):
     #No caso de termos que registar uma nova pessoa na database, arranjar uma maneira de ir buscar o nome e email
 
     #name = "Guilherme Silva"
-    #email = "guilherme@gmail.com"
+    # = "guilherme@gmail.com"
     #register_person_database(name, email, embedding)
 
     #return embedding
 
 def resgiste_presence(embedding1):
+    if embedding1 is None or np.linalg.norm(embedding1) == 0:
+        print("Embedding de entrada inválido.")
+        return
+
     while True:
         print("Estabelecendo conexão com a base de dados...")
         conn = connect_database()
@@ -47,88 +51,93 @@ def resgiste_presence(embedding1):
             break
         else:
             print("Ainda não foi possível conectar ...")
+
     cursor = conn.cursor()
-    cursor.execute("SELECT nome, email, embedding_vector from funcionario inner join face_template on funcionario.id = face_template.funcionario_id where funcionario.ativo = true")
-    rows = cursor.fetchall()
-    name = rows[0][0]
-    embedding = np.array(rows[0][2], dtype=np.float32)
+    try:
+        cursor.execute(
+            "SELECT funcionario.id, nome, email, embedding_vector "
+            "FROM funcionario INNER JOIN face_template ON funcionario.id = face_template.funcionario_id "
+            "WHERE funcionario.ativo = true"
+        )
+        rows = cursor.fetchall()
+        if not rows:
+            print("Nenhum template facial na base de dados.")
+            return
 
-    #Aqui vamos calcular a similaridade entre os embeddings
-    similarity = np.dot(embedding1, embedding) / (np.linalg.norm(embedding1) * np.linalg.norm(embedding))
-    threshold = 0.70  # Defina um limiar adequado para considerar uma correspond
+        best_similarity = -1.0
+        best_row = None
 
-    #Aqui vou buscar os dados que preciso para registar a presença
-    cursor.execute("SELECT id FROM funcionario WHERE nome LIKE %s",(f"{name}",))
-    funcionario = cursor.fetchall()
-    id_funcionario = funcionario[0][0]
+        for row in rows:
+            name_candidate = row[1]  #Vai mostar o nome de quem está a comparar
+            try:
+                db_emb = np.array(row[3], dtype=np.float32)
+            except Exception as e:
+                print(f"Erro ao converter embedding da base for {name_candidate}: {e}")
+                continue
 
-    # Definir o tipo de registo com base na hora atual
-    if (datetime.datetime.now().hour == 9 and datetime.datetime.now().minute <= 10):
-        tipo = "ENTRADA"
-        observacao = "Entrada normal"
+            denom = np.linalg.norm(embedding1) * np.linalg.norm(db_emb)
+            if denom == 0:
+                print(f"Skipping {name_candidate}: zero norm embedding")
+                continue
 
-    elif (datetime.datetime.now().hour == 9 and datetime.datetime.now().minute > 10):
-        tipo = "ENTRADA"
-        observacao = "Entrada atrasada"
+            sim = float(np.dot(embedding1, db_emb) / denom)
+            print(f"Comparing with {name_candidate} -> similarity: {sim:.4f}")
 
-    elif (datetime.datetime.now().hour < 9):
-        tipo = "ENTRADA"
-        observacao = "Entrada antecipada"
+            if sim > best_similarity:
+                best_similarity = sim
+                best_row = row
 
-    elif (datetime.datetime.now().hour == 13 and datetime.datetime.now().minute <= 10):
-        tipo = "ALMOCO_IN"
-        observacao = "Saída normal para almoço"
+        threshold = 0.70
+        if not best_row or best_similarity < threshold:
+            print(f"Nenhuma correspondência suficiente encontrada. Similaridade máxima: {best_similarity:.2f}")
+            return
 
-    elif (datetime.datetime.now().hour == 13 and datetime.datetime.now().minute > 10):
-        tipo = "ALMOCO_IN"
-        observacao = "Saída tardia para almoço"
+        id_funcionario = best_row[0]
+        name = best_row[1]
+        now = datetime.datetime.now()
+        h, m = now.hour, now.minute
 
-    elif (datetime.datetime.now().hour < 13):
-        tipo = "ALMOCO_IN"
-        observacao = "Saída antecipada para almoço"
+        if (h == 9 and m <= 10):
+            tipo, observacao = "ENTRADA", "Entrada normal"
+        elif (h == 9 and m > 10):
+            tipo, observacao = "ENTRADA", "Entrada atrasada"
+        elif (h < 9):
+            tipo, observacao = "ENTRADA", "Entrada antecipada"
+        elif (h == 13 and m <= 10):
+            tipo, observacao = "ALMOCO_IN", "Saída normal para almoço"
+        elif (h == 13 and m > 10):
+            tipo, observacao = "ALMOCO_IN", "Saída tardia para almoço"
+        elif (h < 13):
+            tipo, observacao = "ALMOCO_IN", "Saída antecipada para almoço"
+        elif (h == 14 and m <= 10):
+            tipo, observacao = "ALMOCO_OUT", "Retorno normal do almoço"
+        elif (h == 14 and m > 10):
+            tipo, observacao = "ALMOCO_OUT", "Retorno atrasado do almoço"
+        elif (h < 14):
+            tipo, observacao = "ALMOCO_OUT", "Retorno antecipado do almoço"
+        elif (h == 17 and m <= 10):
+            tipo, observacao = "SAIDA", "Saída normal"
+        elif (h == 17 and m > 10):
+            tipo, observacao = "SAIDA", "Saída tardia"
+        elif (h < 17):
+            tipo, observacao = "SAIDA", "Saída antecipada"
+        else:
+            tipo, observacao = "CORRECAO", "Horário fora do esperado"
 
-    elif (datetime.datetime.now().hour == 14 and datetime.datetime.now().minute <= 10):
-        tipo = "ALMOCO_OUT"
-        observacao = "Retorno normal do almoço"
-
-    elif (datetime.datetime.now().hour == 14 and datetime.datetime.now().minute > 10):
-        tipo = "ALMOCO_OUT"
-        observacao = "Retorno atrasado do almoço"
-
-    elif (datetime.datetime.now().hour < 14):
-        tipo = "ALMOCO_OUT"
-        observacao = "Retorno antecipado do almoço"
-
-    elif (datetime.datetime.now().hour == 17 and datetime.datetime.now().minute <= 10):
-        tipo = "SAIDA"
-        observacao = "Saída normal"
-
-    elif (datetime.datetime.now().hour == 17 and datetime.datetime.now().minute > 10):
-        tipo = "SAIDA"
-        observacao = "Saída tardia"
-
-    elif (datetime.datetime.now().hour < 17):
-        tipo = "SAIDA"
-        observacao = "Saída antecipada"
-
-    else:
-        tipo = "CORRECAO"
-        observacao = "Horário fora do esperado"
-
-    if similarity >= threshold:
         try:
             cursor.execute(
                 "CALL inserir_evento(%s, %s, %s, %s, %s, %s, %s)",
-                (id_funcionario, tipo, None, None, False, observacao, datetime.datetime.now())
+                (id_funcionario, tipo, None, None, False, observacao, now)
             )
-
             conn.commit()
-            print(f"Presença de {name} registada com sucesso na base de dados.")
+            print(f"Presença de {name} registada com sucesso na base de dados. Similaridade: {best_similarity:.2f}")
         except Exception as e:
             conn.rollback()
             print(f"Erro ao registar presença: {e}")
-    else:
-        print(f"Nenhuma correspondência encontrada. Similaridade máxima: {similarity:.2f}")
+
+    finally:
+        cursor.close()
+        conn.close()
 
 def register_person_database(nome, email, embedding):  # Concluido com sucesso
     '''Aqui vai ser registado os users para ter na database'''
