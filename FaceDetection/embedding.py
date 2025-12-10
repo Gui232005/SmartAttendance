@@ -2,7 +2,6 @@ import cv2 as cv
 import numpy as np
 import datetime
 import psycopg2
-from deepface import DeepFace
 from interface import change_interface_message
 
 def connect_database():
@@ -22,19 +21,23 @@ def connect_database():
         return None
 
 def embedding_photos(photo: np.ndarray):
-    photo_rgb = cv.cvtColor(photo, cv.COLOR_BGR2RGB)  # Converte BGR para RGB para DeepFace processar corretamente
+    gray = cv.cvtColor(photo, cv.COLOR_BGR2GRAY)
+    resized = cv.resize(gray, (32, 32), interpolation=cv.INTER_AREA)
+    vec = resized.flatten().astype(np.float32)
 
-    # Gera o embedding da foto usando o modelo ArcFace
-    result = DeepFace.represent(photo_rgb, model_name="ArcFace", enforce_detection=False)
+    # Normalizar (para não rebentar a similaridade)
+    norm = np.linalg.norm(vec)
+    if norm > 0:
+        vec = vec / norm
 
-    embedding = np.array(result[0]["embedding"], dtype=np.float32)
+    embedding = vec
 
     resgiste_presence(embedding)
 
     #No caso de termos que registar uma nova pessoa na database, arranjar uma maneira de ir buscar o nome e email
 
     #name = "Guilherme Silva"
-    # = "guilherme@gmail.com"
+    #email = "guilherme@gmail.com"
     #register_person_database(name, email, embedding)
 
     #return embedding

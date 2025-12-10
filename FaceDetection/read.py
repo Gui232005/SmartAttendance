@@ -1,6 +1,10 @@
+import sys
 import threading
 import cv2 as cv
 import time
+
+from joblib import delayed
+
 from embedding import embedding_photos
 from interface import interface
 
