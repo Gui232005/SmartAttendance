@@ -3,9 +3,7 @@ import numpy as np
 import datetime
 import psycopg2
 from deepface import DeepFace
-from Interfaces.accept import *
-from Interfaces.reject import reject_attendance_interface
-
+from interface import *
 
 def connect_database():
     try:
@@ -92,7 +90,7 @@ def resgiste_presence(embedding1):
 
         threshold = 0.70
         if not best_row or best_similarity < threshold:
-            reject_attendance_interface()
+            change_interface_message("Presença rejeitada.\nNenhuma correspondência suficiente encontrada.","red")
             print(f"Nenhuma correspondência suficiente encontrada. Similaridade máxima: {best_similarity:.2f}")
             return
 
@@ -135,7 +133,7 @@ def resgiste_presence(embedding1):
             )
             conn.commit()
             print(f"Presença de {name} registada com sucesso na base de dados. Similaridade: {best_similarity:.2f}")
-            attendance_accepted(name, best_similarity);
+            change_interface_message(f"Presença do {name} aceite","green")
         except Exception as e:
             conn.rollback()
             print(f"Erro ao registar presença: {e}")
@@ -156,6 +154,7 @@ def register_person_database(nome, email, embedding):  # Concluido com sucesso
 
     # Fazer uma verificação do embedding
     if embedding is None:
+        change_interface_message("Registo rejeitado. \nErro ao registar na base de dados.","red")
         print("Embedding inválido. Não é possível registar o funcionário.")
         return
 
@@ -167,6 +166,7 @@ def register_person_database(nome, email, embedding):  # Concluido com sucesso
             (nome, email, embedding.astype(float).tolist(), 1.0, None)
         )
         conn.commit()
+        change_interface_message(f"Registo do {nome} realizado com sucesso","green")
         print(f"Funcionário {nome} registado com sucesso na base de dados.")
 
     except Exception as e:
