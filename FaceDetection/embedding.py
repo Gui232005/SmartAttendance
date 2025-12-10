@@ -3,6 +3,9 @@ import numpy as np
 import datetime
 import psycopg2
 from deepface import DeepFace
+from Interfaces.accept import *
+from Interfaces.reject import reject_attendance_interface
+
 
 def connect_database():
     try:
@@ -89,6 +92,7 @@ def resgiste_presence(embedding1):
 
         threshold = 0.70
         if not best_row or best_similarity < threshold:
+            reject_attendance_interface()
             print(f"Nenhuma correspondência suficiente encontrada. Similaridade máxima: {best_similarity:.2f}")
             return
 
@@ -131,6 +135,7 @@ def resgiste_presence(embedding1):
             )
             conn.commit()
             print(f"Presença de {name} registada com sucesso na base de dados. Similaridade: {best_similarity:.2f}")
+            attendance_accepted(name, best_similarity);
         except Exception as e:
             conn.rollback()
             print(f"Erro ao registar presença: {e}")

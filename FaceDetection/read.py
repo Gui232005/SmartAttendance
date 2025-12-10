@@ -1,12 +1,11 @@
 import cv2 as cv
 import time
-
 from embedding import embedding_photos, connect_database, register_person_database
 
 face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 capture = cv.VideoCapture(0)  # câmera
-#capture = cv.imread('Photos/Amadeu.png')  # imagem
+#capture = cv.imread('Photos/Amadeu.png') # imagem
 
 # Detecta se a fonte é um video ou photo
 is_video = hasattr(capture, 'read')
