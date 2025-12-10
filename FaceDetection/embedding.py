@@ -3,7 +3,7 @@ import numpy as np
 import datetime
 import psycopg2
 from deepface import DeepFace
-from interface import *
+from interface import change_interface_message
 
 def connect_database():
     try:
