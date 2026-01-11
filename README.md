@@ -1,2 +1,5 @@
 # Sistemas-Embebidos
-Repositório para o projeto de Sistemas Embebidos
+  O Smart Attendance é um sistema inteligente de controlo de presenças baseado em visão computacional, desenvolvido com o objetivo de automatizar o registo das horas de entrada e saída dos funcionários de forma fiável, inclusiva e eficiente. O sistema recorre ao reconhecimento facial para identificar os utilizadores, integrando um mecanismo de ajuste automático da câmara que permite adaptar o enquadramento da face a indivíduos com diferentes alturas. 
+  Esta abordagem visa ultrapassar limitações comuns nos sistemas tradicionais de marcação de presenças, nomeadamente problemas de ergonomia, precisão e possibilidade de fraude. A solução proposta combina componentes de hardware, como um Raspberry Pi, uma câmara, um sensor de ultrassons e um motor, com uma infraestrutura de software responsável pelo processamento de imagem e armazenamento dos registos numa base de dados. 
+  Os testes realizados demonstram uma elevada taxa de sucesso no reconhecimento de utilizadores previamente registados, evidenciando o potencial do sistema para aplicação em ambientes organizacionais reais.
+  Aqui apenas está presente o código do porjeto.
