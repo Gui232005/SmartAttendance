@@ -3,3 +3,8 @@
   Esta abordagem visa ultrapassar limitações comuns nos sistemas tradicionais de marcação de presenças, nomeadamente problemas de ergonomia, precisão e possibilidade de fraude. A solução proposta combina componentes de hardware, como um Raspberry Pi, uma câmara, um sensor de ultrassons e um motor, com uma infraestrutura de software responsável pelo processamento de imagem e armazenamento dos registos numa base de dados. 
   Os testes realizados demonstram uma elevada taxa de sucesso no reconhecimento de utilizadores previamente registados, evidenciando o potencial do sistema para aplicação em ambientes organizacionais reais.
   Aqui apenas está presente o código do porjeto.
+
+  Quem realizou o que:
+    Guilherme Silva -> Tudo o que quem relação com o reconhecimento facial
+    Lucas Pinto -> Código da pagina web e configuração da base de dados
+    Daniel Amaral -> Código do Motor
