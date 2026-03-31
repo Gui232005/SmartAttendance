@@ -1,10 +1,18 @@
-# Sistemas-Embebidos
-  O Smart Attendance é um sistema inteligente de controlo de presenças baseado em visão computacional, desenvolvido com o objetivo de automatizar o registo das horas de entrada e saída dos funcionários de forma fiável, inclusiva e eficiente. O sistema recorre ao reconhecimento facial para identificar os utilizadores, integrando um mecanismo de ajuste automático da câmara que permite adaptar o enquadramento da face a indivíduos com diferentes alturas. 
-  Esta abordagem visa ultrapassar limitações comuns nos sistemas tradicionais de marcação de presenças, nomeadamente problemas de ergonomia, precisão e possibilidade de fraude. A solução proposta combina componentes de hardware, como um Raspberry Pi, uma câmara, um sensor de ultrassons e um motor, com uma infraestrutura de software responsável pelo processamento de imagem e armazenamento dos registos numa base de dados. 
-  Os testes realizados demonstram uma elevada taxa de sucesso no reconhecimento de utilizadores previamente registados, evidenciando o potencial do sistema para aplicação em ambientes organizacionais reais.
-  Aqui apenas está presente o código do porjeto.
+## Visão geral
+O SmartAttendance tem como objetivo registrar e gerenciar presenças de forma automatizada, combinando:
 
-  Quem realizou o que:
-    Guilherme Silva -> Tudo o que quem relação com o reconhecimento facial
-    Lucas Pinto -> Código da pagina web e configuração da base de dados
-    Daniel Amaral -> Código do Motor
+# Backend/serviços e integrações (principalmente em Python)
+Interface e/ou camada web (principalmente em JavaScript, com HTML/CSS)
+Integração com recursos típicos de sistemas embarcados (sensores, identificação, comunicação com hardware, etc.)
+Ajuste os itens acima conforme o que seu sistema realmente usa (ex.: RFID, biometria, QR Code, câmera, ESP32/Raspberry Pi, etc.).
+
+# Funcionalidades (propostas)
+Registo e identificação de usuários
+Registro de presença com data/hora
+Consulta de presenças por usuário/período
+Painel web para visualização e administração
+Integração com dispositivo embarcado para captura/validação
+Tecnologias
+JavaScript (camada de aplicação / interface / API)
+Python (automação, serviços, integração com hardware, scripts)
+HTML/CSS (interface)
