@@ -1,18 +1,19 @@
-# Visão geral
-O SmartAttendance tem como objetivo registrar e gerenciar presenças de forma automatizada, combinando:
+# Overview
 
-## Backend (principalmente em Python)
-Interface e/ou camada web (principalmente em JavaScript, com HTML/CSS)
-Integração com recursos típicos de sistemas embarcados (sensores, identificação, comunicação com hardware, etc.)
+SmartAttendance aims to record and manage attendance automatically, combining:
+## Backend (mainly in Python)
 
-## Funcionalidades
-Registo e identificação de usuários
-Registro de presença com data/hora
-Consulta de presenças por usuário/período
-Painel web para visualização e administração
-Integração com dispositivo embarcado para captura/validação
+Interface and/or web layer (mainly in JavaScript, with HTML/CSS)
+Integration with typical embedded system features (sensors, identification, hardware communication, etc.)
+## Features
 
-# Tecnologias
-JavaScript (camada de aplicação / interface / API)
-Python (automação, serviços, integração com hardware, scripts)
+User registration and identification
+Attendance recording with date/time
+Attendance check by user/time period
+Web dashboard for viewing and administration
+Integration with an embedded device for capture/validation
+## Technologies
+
+JavaScript (application layer / interface / API) <br>
+Python (automation, services, hardware integration, scripts) <br>
 HTML/CSS (interface)
